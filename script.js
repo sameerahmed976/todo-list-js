@@ -4,7 +4,6 @@ const container = document.querySelector(".container");
 const input = document.querySelector("#form");
 const listItem = document.querySelector(".todo-list");
 const containerList = document.querySelector(".container-list");
-
 const clearButton = document.querySelector(".btn-clear");
 const submitButton = document.querySelector(".btn-submit");
 
@@ -13,6 +12,8 @@ let editFlag = false;
 let editId = "";
 
 // add eventlistener
+window.addEventListener("DOMContentLoaded", setupItem);
+
 form.addEventListener("submit", addItem);
 clearButton.addEventListener("click", clearItems);
 
@@ -24,33 +25,34 @@ function addItem(e) {
   if (inputValue && !editFlag) {
     // add to the list
     // console.log(inputValue);
-    const element = document.createElement("article");
-    element.classList.add("todo-list");
-    const createAttr = document.createAttribute("data-id");
-    createAttr.value = id;
-    element.setAttributeNode(createAttr);
-    element.innerHTML = ` <h5>${inputValue}</h5>
-            <article class="btn-group">
-              <button type="button" class="btn-edit">
-                <i class="fa-solid fa-edit"></i>
-              </button>
-              <button type="button" class="btn-trash">
-                <i class="fa-solid fa-trash-alt"></i>
-              </button>
-            </article> `;
+    createListELement(id, inputValue);
+    // const element = document.createElement("article");
+    // element.classList.add("todo-list");
+    // const createAttr = document.createAttribute("data-id");
+    // createAttr.value = id;
+    // element.setAttributeNode(createAttr);
+    // element.innerHTML = ` <h5>${inputValue}</h5>
+    //         <article class="btn-group">
+    //           <button type="button" class="btn-edit">
+    //             <i class="fa-solid fa-edit"></i>
+    //           </button>
+    //           <button type="button" class="btn-trash">
+    //             <i class="fa-solid fa-trash-alt"></i>
+    //           </button>
+    //         </article> `;
 
-    // delete item
+    // // delete item
 
-    const trashButton = element.querySelector(".btn-trash");
-    const editButton = element.querySelector(".btn-edit");
-    trashButton.addEventListener("click", deleteItem);
-    editButton.addEventListener("click", editItem);
+    // const trashButton = element.querySelector(".btn-trash");
+    // const editButton = element.querySelector(".btn-edit");
+    // trashButton.addEventListener("click", deleteItem);
+    // editButton.addEventListener("click", editItem);
 
-    containerList.appendChild(element);
+    // containerList.appendChild(element);
     displayAlert("item Added", "success");
     container.classList.add("show-container");
 
-    // addToLocalStorage(id, value);
+    addToLocalStorage(id, inputValue);
 
     setBackToDefault();
   } else if (inputValue && editFlag) {
@@ -60,6 +62,7 @@ function addItem(e) {
     //   "🚀 ~ file: script.js ~ line 59 ~ addItem ~ editElement.innerHTML",
     //   editElement.innerHTML
     // );
+    editLocalStorage(editId, input.value);
     displayAlert("edit item", "success");
     setBackToDefault();
   } else {
@@ -77,6 +80,8 @@ function clearItems() {
     displayAlert("all items removed", "danger");
     container.classList.remove("show-container");
   }
+
+  localStorage.removeItem("list");
 }
 
 // delete Item
@@ -100,6 +105,7 @@ function deleteItem(e) {
   }
   displayAlert("item removed", "success");
   setBackToDefault();
+  removeLocalStorage(id);
 }
 // edit Item
 
@@ -134,7 +140,14 @@ function displayAlert(text, selector) {
 }
 
 function addToLocalStorage(id, value) {
-  console.log("added to local storage");
+  let task = {
+    id: id,
+    value: value,
+  };
+
+  let items = getLocalStorage();
+  items.push(task);
+  localStorage.setItem("list", JSON.stringify(items));
 }
 
 function setBackToDefault() {
@@ -143,4 +156,73 @@ function setBackToDefault() {
   editFlag = false;
   editId = "";
   submitButton.textContent = "submit";
+}
+
+function removeLocalStorage(id) {
+  let items = getLocalStorage();
+  items = items.filter(function (item) {
+    if (item.id !== id) {
+      return item;
+    }
+  });
+  localStorage.setItem("list", JSON.stringify(items));
+}
+
+function editLocalStorage(editId, value) {
+  let items = getLocalStorage();
+  items = items.map((item) => {
+    if (item.id === editId) {
+      item.value = value;
+    }
+    return item;
+  });
+  localStorage.setItem("list", JSON.stringify(items));
+}
+
+function getLocalStorage() {
+  return localStorage.getItem("list")
+    ? JSON.parse(localStorage.getItem("list"))
+    : [];
+}
+
+// localStorage.setItem("task", JSON.stringify("HELLO"));
+// let orange = JSON.parse(localStorage.getItem("task"));
+// console.log("🚀 ~ file: script.js ~ line 149 ~ orange", orange);
+
+// localStorage.removeItem("task");
+
+function setupItem() {
+  let items = getLocalStorage();
+  if (items.length > 0) {
+    items.forEach((item) => {
+      createListELement(item.id, item.value);
+    });
+    container.classList.add("show-container");
+  }
+}
+
+function createListELement(id, value) {
+  const element = document.createElement("article");
+  element.classList.add("todo-list");
+  const createAttr = document.createAttribute("data-id");
+  createAttr.value = id;
+  element.setAttributeNode(createAttr);
+  element.innerHTML = ` <h5>${value}</h5>
+            <article class="btn-group">
+              <button type="button" class="btn-edit">
+                <i class="fa-solid fa-edit"></i>
+              </button>
+              <button type="button" class="btn-trash">
+                <i class="fa-solid fa-trash-alt"></i>
+              </button>
+            </article> `;
+
+  // delete item
+
+  const trashButton = element.querySelector(".btn-trash");
+  const editButton = element.querySelector(".btn-edit");
+  trashButton.addEventListener("click", deleteItem);
+  editButton.addEventListener("click", editItem);
+
+  containerList.appendChild(element);
 }
